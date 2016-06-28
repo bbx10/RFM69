@@ -35,6 +35,8 @@
 #define RF69_MAX_DATA_LEN       61 // to take advantage of the built in AES/CRC we want to limit the frame size to the internal FIFO size (66 bytes - 3 bytes overhead - 2 bytes crc)
 #define RF69_SPI_CS             SS // SS is the SPI slave select pin, for instance D10 on ATmega328
 
+#define INTERRUPTS_DISABLE_OK   1
+
 // INT0 on AVRs should be connected to RFM69's DIO0 (ex on ATmega328 it's D2, on ATmega644/1284 it's D2)
 #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATmega88) || defined(__AVR_ATmega8__) || defined(__AVR_ATmega88__)
   #define RF69_IRQ_PIN          2
@@ -48,6 +50,11 @@
 #elif defined(__arm__)//Use pin 10 or any pin you want
   #define RF69_IRQ_PIN          10
   #define RF69_IRQ_NUM          10
+#elif defined(ESP8266)
+  #define RF69_IRQ_PIN          4
+  #define RF69_IRQ_NUM          digitalPinToInterrupt(RF69_IRQ_PIN)
+  #undef INTERRUPTS_DISABLE_OK
+  #define INTERRUPTS_DISABLE_OK 0
 #else 
   #define RF69_IRQ_PIN          2
   #define RF69_IRQ_NUM          0  

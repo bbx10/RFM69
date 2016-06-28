@@ -91,7 +91,7 @@ bool RFM69::initialize(uint8_t freqBand, uint8_t nodeID, uint8_t networkID)
   digitalWrite(_slaveSelectPin, HIGH);
   pinMode(_slaveSelectPin, OUTPUT);
   SPI.begin();
-#ifdef SPI_HAS_TRANSACTION
+#if defined(SPI_HAS_TRANSACTION) && !defined(ESP8266)
   SPI.usingInterrupt(_interruptNum);
 #endif
   unsigned long start = millis();
@@ -379,7 +379,9 @@ void RFM69::receiveBegin() {
 bool RFM69::receiveDone() {
 //ATOMIC_BLOCK(ATOMIC_FORCEON)
 //{
+#if INTERRUPTS_DISABLE_OK
   noInterrupts(); // re-enabled in unselect() via setMode() or via receiveBegin()
+#endif
   if (_mode == RF69_MODE_RX && PAYLOADLEN > 0)
   {
     setMode(RF69_MODE_STANDBY); // enables interrupts
@@ -387,7 +389,9 @@ bool RFM69::receiveDone() {
   }
   else if (_mode == RF69_MODE_RX) // already in RX no payload yet
   {
+#if INTERRUPTS_DISABLE_OK
     interrupts(); // explicitly re-enable interrupts
+#endif
     return false;
   }
   receiveBegin();
@@ -444,7 +448,9 @@ void RFM69::writeReg(uint8_t addr, uint8_t value)
 
 // select the RFM69 transceiver (save SPI settings, set CS low)
 void RFM69::select() {
+#if INTERRUPTS_DISABLE_OK
   noInterrupts();
+#endif
 #if defined (SPCR) && defined (SPSR)
   // save current SPI settings
   _SPCR = SPCR;
@@ -465,7 +471,9 @@ void RFM69::unselect() {
   SPCR = _SPCR;
   SPSR = _SPSR;
 #endif
+#if INTERRUPTS_DISABLE_OK
   maybeInterrupts();
+#endif
 }
 
 // true  = disable filtering to capture all frames on network
@@ -796,6 +804,8 @@ void RFM69::rcCalibration()
 
 inline void RFM69::maybeInterrupts()
 {
+#if INTERRUPTS_DISABLE_OK
   // Only reenable interrupts if we're not being called from the ISR
   if (!_inISR) interrupts();
+#endif
 }
